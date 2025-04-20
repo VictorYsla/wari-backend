@@ -104,7 +104,7 @@ export class TripService {
 
         console.log('distance:', distance);
 
-        if (distance < 9000) {
+        if (distance < 20) {
           console.log(`🚗 Vehículo ${trip.imei} ha llegado al destino.`);
 
           // Aquí podrías actualizar el estado del viaje, detener el cron, etc.
