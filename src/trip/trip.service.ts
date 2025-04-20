@@ -35,16 +35,18 @@ export class TripService {
   }
 
   async updateTrip(id: string, updateTripDto: UpdateTripDto) {
-    const existingTrip = await this.tripRepository.findOne({ where: { id } });
+    // const existingTrip = await this.tripRepository.findOne({ where: { id } });
 
     await this.tripRepository.update({ id }, updateTripDto);
 
     const updatedTrip = await this.tripRepository.findOne({ where: { id } });
 
+    this.tripGateway.emitTripStatusChange(updatedTrip);
+
     // Emitir solo si cambia is_active
-    if (existingTrip?.is_active !== updatedTrip?.is_active) {
-      this.tripGateway.emitTripStatusChange(updatedTrip);
-    }
+    // if (existingTrip?.is_active !== updatedTrip?.is_active) {
+    //   this.tripGateway.emitTripStatusChange(updatedTrip);
+    // }
 
     return updatedTrip;
   }
