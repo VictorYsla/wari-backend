@@ -1,4 +1,8 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateTripDto } from './dto/create-trip.dto';
@@ -22,6 +26,19 @@ export class TripService {
   ) {}
 
   async createTrip(createTripDto: CreateTripDto) {
+    const existingActiveTrip = await this.tripRepository.findOne({
+      where: {
+        is_active: true,
+        imei: createTripDto.imei,
+      },
+    });
+
+    if (existingActiveTrip) {
+      throw new BadRequestException(
+        `Ya existe un viaje activo para el IMEI: ${createTripDto.imei}`,
+      );
+    }
+
     const newTrip = this.tripRepository.create(createTripDto);
     return await this.tripRepository.save(newTrip);
   }
