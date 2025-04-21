@@ -17,7 +17,6 @@ export class TripGateway {
 
   // El cliente debe llamar esto para unirse a su sala privada
   @SubscribeMessage('join-trip-room')
-  @SubscribeMessage('join-trip-room')
   handleJoinRoom(
     @MessageBody() data: { id: string },
     @ConnectedSocket() client: Socket,
