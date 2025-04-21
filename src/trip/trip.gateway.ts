@@ -11,6 +11,7 @@ import { Server, Socket } from 'socket.io';
   cors: {
     origin: '*', // Solo para desarrollo
   },
+  path: '/socket.io',
 })
 export class TripGateway {
   @WebSocketServer() server: Server;
