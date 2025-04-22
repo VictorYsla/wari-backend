@@ -112,8 +112,6 @@ export class TripService {
         const destination = JSON.parse(trip.destination);
         const vehicleLocation = { lat: vehicleData.lat, lng: vehicleData.lng };
 
-        console.log('destination:', destination);
-
         const distance = haversineDistance(
           +vehicleLocation.lat,
           +vehicleLocation.lng,
