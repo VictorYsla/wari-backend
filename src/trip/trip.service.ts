@@ -104,6 +104,8 @@ export class TripService {
       };
     }
 
+    //ForTestDeploy
+
     const existCron = this.schedulerRegistry.doesExist('cron', `${trip.imei}`);
 
     if (!existCron) {
