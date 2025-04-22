@@ -106,6 +106,8 @@ export class TripService {
 
     const existCron = this.schedulerRegistry.doesExist('cron', `${trip.imei}`);
 
+    //for deploy
+
     if (!existCron) {
       const job = new CronJob('*/10 * * * * *', async () => {
         //harvisine for calculate if vehicle is on destination
