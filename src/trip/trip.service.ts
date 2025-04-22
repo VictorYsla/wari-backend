@@ -35,7 +35,7 @@ export class TripService {
 
     if (existingActiveTrip) {
       throw new BadRequestException(
-        `Ya existe un viaje activo para el IMEI: ${createTripDto.imei}`,
+        `Ya existe un viaje activo para este vehículo`,
       );
     }
 
