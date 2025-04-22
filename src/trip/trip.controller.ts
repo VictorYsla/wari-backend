@@ -33,6 +33,11 @@ export class TripController {
     return this.tripService.getAllCrons();
   }
 
+  @Post('create-multiple-trip-monitorings')
+  createMultipleTripMonitorings() {
+    return this.tripService.createMultipleTripMonitorings();
+  }
+
   @Patch('update-trip')
   updateTrip(@Query('id') id: string, @Body() updateTripDto: UpdateTripDto) {
     return this.tripService.updateTrip(id, updateTripDto);

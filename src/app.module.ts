@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TripModule } from './trip/trip.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -7,6 +6,8 @@ import { ConfigModule } from '@nestjs/config';
 import { CommonModule } from './generic/common.module';
 import { HawkModule } from './hawk/hawk.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { MonitoringItemsModule } from './monitoring-items/monitoring-items.module';
+import { HttpModule } from '@nestjs/axios';
 
 @Module({
   imports: [
@@ -27,8 +28,10 @@ import { ScheduleModule } from '@nestjs/schedule';
     TripModule,
     CommonModule,
     HawkModule,
+    HttpModule.register({}),
+    MonitoringItemsModule,
   ],
-  controllers: [AppController],
+  controllers: [],
   providers: [AppService],
 })
 export class AppModule {}

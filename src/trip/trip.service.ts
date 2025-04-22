@@ -14,6 +14,7 @@ import { SchedulerRegistry } from '@nestjs/schedule';
 import { CronJob } from 'cron';
 import { haversineDistance } from './helpers';
 import { GenericResponse } from 'src/generic/types/generic-response.type';
+import { MonitoringItemsService } from 'src/monitoring-items/monitoring-items.service';
 
 @Injectable()
 export class TripService {
@@ -21,6 +22,7 @@ export class TripService {
     private readonly tripGateway: TripGateway,
     private readonly hawkService: HawkService,
     private readonly schedulerRegistry: SchedulerRegistry,
+    private readonly monitoringItemsService: MonitoringItemsService,
     @InjectRepository(Trip)
     private readonly tripRepository: Repository<Trip>,
   ) {}
@@ -136,6 +138,17 @@ export class TripService {
 
       this.schedulerRegistry.addCronJob(trip.imei, job);
 
+      const existingItem = await this.monitoringItemsService.findByTripId(
+        trip.id,
+      );
+
+      if (!existingItem) {
+        await this.monitoringItemsService.addItem({
+          imei: trip.imei,
+          tripId: trip.id,
+        });
+      }
+
       job.start();
 
       return {
@@ -143,6 +156,10 @@ export class TripService {
         success: true,
       };
     }
+    return {
+      message: `${trip.imei.slice(0, 5)}: is not available for monitoring cron`,
+      success: false,
+    };
   }
 
   async stopMonitoring(imei: string): Promise<GenericResponse> {
@@ -153,7 +170,7 @@ export class TripService {
       job.stop();
       this.schedulerRegistry.deleteCronJob(imei);
 
-      // await this.monitoringItemsService.removeItem(itemKey);
+      await this.monitoringItemsService.removeItem(imei);
 
       return {
         message: `${imei.slice(0, 5)}:monitoring has been stopped`,
@@ -185,5 +202,18 @@ export class TripService {
     const vehicleDataArray = await Promise.all(vehicleDataPromises);
 
     return vehicleDataArray;
+  }
+
+  async createMultipleTripMonitorings() {
+    const results = [];
+
+    const monitoringItems = await this.monitoringItemsService.getAllItems();
+
+    for (const item of monitoringItems.data) {
+      const result = await this.createMonitoring(item.tripId);
+      results.push({ item, result });
+    }
+
+    return results;
   }
 }
