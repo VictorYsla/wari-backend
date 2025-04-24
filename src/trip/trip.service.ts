@@ -36,9 +36,10 @@ export class TripService {
     });
 
     if (existingActiveTrip) {
-      throw new BadRequestException(
-        `Ya existe un viaje activo para este vehículo`,
-      );
+      throw new BadRequestException({
+        message: 'Ya existe un viaje activo para este vehículo',
+        activeTripId: existingActiveTrip.id,
+      });
     }
 
     const newTrip = this.tripRepository.create(createTripDto);
