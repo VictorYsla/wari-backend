@@ -36,13 +36,21 @@ export class TripService {
     });
 
     if (existingActiveTrip) {
-      throw new BadRequestException(
-        `Ya existe un viaje activo para este vehículo`,
-      );
+      return {
+        success: false,
+        message: 'Ya existe un viaje activo para este vehículo',
+        data: existingActiveTrip,
+      };
     }
 
     const newTrip = this.tripRepository.create(createTripDto);
-    return await this.tripRepository.save(newTrip);
+    const savedTrip = await this.tripRepository.save(newTrip);
+
+    return {
+      success: true,
+      message: 'Trip created',
+      data: savedTrip,
+    };
   }
 
   async findTripById(id: string): Promise<Trip> {
