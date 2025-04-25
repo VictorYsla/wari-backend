@@ -1,4 +1,8 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateTripDto } from './dto/create-trip.dto';
@@ -32,23 +36,13 @@ export class TripService {
     });
 
     if (existingActiveTrip) {
-      return {
-        success: false,
-        message: 'Ya existe un viaje activo para este vehículo',
-        data: {
-          ...existingActiveTrip,
-        },
-      };
+      throw new BadRequestException(
+        `Ya existe un viaje activo para este vehículo`,
+      );
     }
 
     const newTrip = this.tripRepository.create(createTripDto);
-    const savedTrip = await this.tripRepository.save(newTrip);
-
-    return {
-      success: true,
-      message: 'Trip creado exitosamente',
-      data: savedTrip,
-    };
+    return await this.tripRepository.save(newTrip);
   }
 
   async findTripById(id: string): Promise<Trip> {
@@ -129,7 +123,7 @@ export class TripService {
 
         console.log('distance:', distance);
 
-        if (distance < 9000) {
+        if (distance < 20) {
           console.log(`🚗 Vehículo ${trip.imei} ha llegado al destino.`);
 
           // Aquí podrías actualizar el estado del viaje, detener el cron, etc.
