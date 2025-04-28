@@ -17,6 +17,9 @@ export class Trip {
   @Column({ name: 'is_completed', default: false })
   is_completed: boolean;
 
+  @Column({ name: 'is_canceled_by_passenger', default: false })
+  is_canceled_by_passenger: boolean;
+
   @Column({ nullable: true })
   destination: string;
 
