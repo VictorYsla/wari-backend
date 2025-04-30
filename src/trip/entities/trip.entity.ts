@@ -26,6 +26,9 @@ export class Trip {
   @Column()
   imei: string;
 
+  @Column({ name: 'start_date', type: 'timestamptz', nullable: true })
+  start_date: Date;
+
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   created_at: Date;
 
