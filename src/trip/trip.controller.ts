@@ -38,6 +38,11 @@ export class TripController {
     return this.tripService.createMultipleTripMonitorings();
   }
 
+  @Post('scheduleGracePeriodChecks')
+  scheduleGracePeriodChecks() {
+    return this.tripService.scheduleGracePeriodChecks();
+  }
+
   @Patch('update-trip')
   updateTrip(@Query('id') id: string, @Body() updateTripDto: UpdateTripDto) {
     return this.tripService.updateTrip(id, updateTripDto);

@@ -62,6 +62,25 @@ export class TripService {
 
     await this.tripRepository.update({ id }, updateTripDto);
 
+    if (updateTripDto.grace_period_active) {
+      const timeout = setTimeout(
+        async () => {
+          await this.tripRepository.update(
+            { id },
+            { grace_period_active: false },
+          );
+
+          const updatedTrip = await this.tripRepository.findOne({
+            where: { id },
+          });
+          this.tripGateway.emitTripStatusChange(updatedTrip);
+        },
+        10 * 60 * 1000,
+      ); // 10 minutos en milisegundos
+
+      this.schedulerRegistry.addTimeout(id, timeout);
+    }
+
     const updatedTrip = await this.tripRepository.findOne({ where: { id } });
 
     this.tripGateway.emitTripStatusChange(updatedTrip);
@@ -219,5 +238,40 @@ export class TripService {
     }
 
     return results;
+  }
+
+  async scheduleGracePeriodChecks() {
+    const trips = await this.tripRepository.find({
+      where: { grace_period_active: true },
+    });
+
+    for (const trip of trips) {
+      const timeLeft =
+        new Date(trip.grace_period_end_time).getTime() - Date.now();
+
+      if (timeLeft <= 0) {
+        // Ya se venció, desactivar inmediatamente
+        await this.tripRepository.update(
+          { id: trip.id },
+          { grace_period_active: false },
+        );
+        this.tripGateway.emitTripStatusChange(trip);
+      } else {
+        // Programar la desactivación futura
+        const timeout = setTimeout(async () => {
+          await this.tripRepository.update(
+            { id: trip.id },
+            { grace_period_active: false },
+          );
+
+          const updatedTrip = await this.tripRepository.findOne({
+            where: { id: trip.id },
+          });
+          this.tripGateway.emitTripStatusChange(updatedTrip);
+        }, timeLeft);
+
+        this.schedulerRegistry.addTimeout(`grace-timeout-${trip.id}`, timeout);
+      }
+    }
   }
 }

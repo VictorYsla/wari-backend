@@ -15,9 +15,12 @@ export class AppService implements OnModuleInit {
 
   async restoreCrons() {
     try {
-      const url = `${process.env.API_URL_SERVER}/trip/create-multiple-trip-monitorings`;
+      const multipliesMonitoringUrl = `${process.env.API_URL_SERVER}/trip/create-multiple-trip-monitorings`;
+      const verifyGraceTimeUrl = `${process.env.API_URL_SERVER}/trip/scheduleGracePeriodChecks`;
 
-      await firstValueFrom(this.httpService.post(url));
+      await firstValueFrom(this.httpService.post(multipliesMonitoringUrl));
+      await firstValueFrom(this.httpService.post(verifyGraceTimeUrl));
+
       this.logger.log('✅ Crons restaurados correctamente');
     } catch (error) {
       this.logger.error('❌ Error restaurando cron jobs:', error.message);

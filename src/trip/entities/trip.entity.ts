@@ -20,6 +20,12 @@ export class Trip {
   @Column({ name: 'is_canceled_by_passenger', default: false })
   is_canceled_by_passenger: boolean;
 
+  @Column({ name: 'has_been_shared', default: false })
+  has_been_shared: boolean;
+
+  @Column({ name: 'grace_period_active', default: false })
+  grace_period_active: boolean;
+
   @Column({ nullable: true })
   destination: string;
 
@@ -28,6 +34,13 @@ export class Trip {
 
   @Column({ name: 'start_date', type: 'timestamptz', nullable: true })
   start_date: Date;
+
+  @Column({
+    name: 'grace_period_end_time',
+    type: 'timestamptz',
+    nullable: true,
+  })
+  grace_period_end_time: Date;
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   created_at: Date;
