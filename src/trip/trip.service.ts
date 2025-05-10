@@ -75,8 +75,7 @@ export class TripService {
           });
           this.tripGateway.emitTripStatusChange(updatedTrip);
         },
-        // 10 * 60 * 1000,
-        1 * 60 * 1000 - 5000,
+        10 * 60 * 1000 - 5000,
       ); // 10 minutos en milisegundos
 
       this.schedulerRegistry.addTimeout(id, timeout);
@@ -269,7 +268,7 @@ export class TripService {
             where: { id: trip.id },
           });
           this.tripGateway.emitTripStatusChange(updatedTrip);
-        }, timeLeft);
+        }, timeLeft - 5000);
 
         this.schedulerRegistry.addTimeout(`grace-timeout-${trip.id}`, timeout);
       }
