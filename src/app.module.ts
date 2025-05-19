@@ -8,6 +8,7 @@ import { HawkModule } from './hawk/hawk.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { MonitoringItemsModule } from './monitoring-items/monitoring-items.module';
 import { HttpModule } from '@nestjs/axios';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { HttpModule } from '@nestjs/axios';
     HawkModule,
     HttpModule.register({}),
     MonitoringItemsModule,
+    UsersModule,
   ],
   controllers: [],
   providers: [AppService],
