@@ -17,9 +17,11 @@ export class AppService implements OnModuleInit {
     try {
       const multipliesMonitoringUrl = `${process.env.API_URL_SERVER}/trip/create-multiple-trip-monitorings`;
       const verifyGraceTimeUrl = `${process.env.API_URL_SERVER}/trip/scheduleGracePeriodChecks`;
+      const multipliesUserMonitoring = `${process.env.API_URL_SERVER}/users/create-multiple-users-monitorings`;
 
       await firstValueFrom(this.httpService.post(multipliesMonitoringUrl));
       await firstValueFrom(this.httpService.post(verifyGraceTimeUrl));
+      await firstValueFrom(this.httpService.post(multipliesUserMonitoring));
 
       this.logger.log('✅ Crons restaurados correctamente');
     } catch (error) {

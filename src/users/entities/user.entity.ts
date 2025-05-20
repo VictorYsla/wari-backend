@@ -18,7 +18,7 @@ export class User {
   is_active: boolean;
 
   @Column({ type: 'boolean', default: false })
-  expired: boolean;
+  is_expired: boolean;
 
   @Column({ name: 'expired_date', type: 'timestamptz', nullable: false })
   expired_date: Date | null;

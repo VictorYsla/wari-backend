@@ -8,7 +8,7 @@ export class CreateUserDto {
   is_active: boolean;
 
   @IsBoolean()
-  expired: boolean;
+  is_expired: boolean;
 
   @IsDateString()
   expired_date: string;

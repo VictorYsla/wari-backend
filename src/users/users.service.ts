@@ -4,10 +4,16 @@ import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { SchedulerRegistry } from '@nestjs/schedule';
+import { CronJob } from 'cron';
+import { MonitoringUserItemsService } from 'src/monitoring-user-items/monitoring-user-items.service';
 
 @Injectable()
 export class UsersService {
   constructor(
+    private readonly schedulerRegistry: SchedulerRegistry,
+    private readonly monitoringUserItemsService: MonitoringUserItemsService,
+
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
   ) {}
@@ -27,6 +33,7 @@ export class UsersService {
 
       const newUser = this.userRepository.create(createUserDto);
       const savedUser = await this.userRepository.save(newUser);
+      await this.createMonitoring(savedUser.id);
 
       return {
         success: true,
@@ -131,5 +138,86 @@ export class UsersService {
         message: 'Error al buscar el usuario por placa',
       };
     }
+  }
+
+  async createMonitoring(id: string) {
+    const userResponse = await this.getUserById(id);
+
+    const user = userResponse?.data;
+
+    if (!user?.id) {
+      return {
+        message: `User id is not valid`,
+        success: false,
+      };
+    }
+
+    const existCron = this.schedulerRegistry.doesExist('cron', `${user?.id}`);
+
+    if (!existCron) {
+      const job = new CronJob(
+        '0 5 0 * * *',
+        async () => {
+          const now = new Date();
+          const expiredDate = new Date(user?.expired_date);
+
+          const isExpired = expiredDate && expiredDate < now;
+
+          const updateUser = {
+            ...user,
+            is_expired: isExpired,
+            expired_date: user.expired_date
+              ? new Date(user.expired_date).toISOString()
+              : null,
+          };
+
+          const updatedUser = await this.updateUser(user?.id, updateUser);
+
+          console.log('updatedUser:', updatedUser);
+        },
+        null,
+        false,
+        'America/Lima',
+      );
+
+      this.schedulerRegistry.addCronJob(user?.id, job);
+
+      const existingItem = await this.monitoringUserItemsService.findByUserId(
+        user.id,
+      );
+
+      if (!existingItem) {
+        await this.monitoringUserItemsService.addItem({
+          plate: user.plate,
+          user_id: user.id,
+        });
+      }
+
+      job.start();
+
+      return {
+        message: `${user.id.slice(0, 5)}: monitoring is running`,
+        success: true,
+      };
+    }
+    return {
+      message: `${user.id.slice(0, 5)}: is not available for monitoring cron`,
+      success: false,
+    };
+  }
+
+  async createMultipleUsersMonitorings() {
+    const results = [];
+
+    const monitoringItems = await this.monitoringUserItemsService.getAllItems();
+
+    for (const item of monitoringItems.data) {
+      const result = await this.createMonitoring(item.id);
+      results.push({ item, result });
+    }
+
+    console.log('Monitoring user items created successfully');
+
+    return results;
   }
 }

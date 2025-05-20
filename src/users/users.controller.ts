@@ -48,4 +48,9 @@ export class UsersController {
   async getUserByPlate(@Query('plate') plate: string) {
     return await this.usersService.getUserByPlate(plate);
   }
+
+  @Post('create-multiple-users-monitorings')
+  createMultipleUsersMonitorings() {
+    return this.usersService.createMultipleUsersMonitorings();
+  }
 }
