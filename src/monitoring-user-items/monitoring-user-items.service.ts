@@ -12,7 +12,9 @@ export class MonitoringUserItemsService {
 
   async addItem(data: Partial<MonitoringUserItem>) {
     const newItem = this.monitoringUserItemsRepository.create(data);
-    await this.monitoringUserItemsRepository.save(newItem);
+    const savedUser = await this.monitoringUserItemsRepository.save(newItem);
+    console.log({ savedUser });
+
     return { success: true, message: 'UserItemAdded-Success', data: {} };
   }
 

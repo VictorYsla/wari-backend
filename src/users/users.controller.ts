@@ -20,6 +20,11 @@ export class UsersController {
     return await this.usersService.createUser(createUserDto);
   }
 
+  @Post('create-user-monitoring')
+  createMonitoring(@Query('id') id: string) {
+    return this.usersService.createMonitoring(id);
+  }
+
   @Get('get-all-users')
   async getAllUsers() {
     // Puedes implementar findAll si quieres

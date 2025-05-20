@@ -186,7 +186,9 @@ export class UsersService {
         user.id,
       );
 
-      if (!existingItem) {
+      console.log({ existingItem: existingItem.length });
+
+      if (!existingItem.length) {
         await this.monitoringUserItemsService.addItem({
           plate: user.plate,
           user_id: user.id,
