@@ -33,4 +33,7 @@ ENVIROMENT="Local"
 yarn start:dev
 ```
 
+## 🧾 Licencia
+
+Este proyecto está bajo la licencia MIT.
 
