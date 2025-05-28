@@ -7,12 +7,16 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { SchedulerRegistry } from '@nestjs/schedule';
 import { CronJob } from 'cron';
 import { MonitoringUserItemsService } from 'src/monitoring-user-items/monitoring-user-items.service';
+import { JwtService } from '@nestjs/jwt';
+import * as bcrypt from 'bcrypt';
+import { LoginDto } from './dto/login.dto';
 
 @Injectable()
 export class UsersService {
   constructor(
     private readonly schedulerRegistry: SchedulerRegistry,
     private readonly monitoringUserItemsService: MonitoringUserItemsService,
+    private readonly jwtService: JwtService,
 
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
@@ -32,13 +36,18 @@ export class UsersService {
       }
 
       const newUser = this.userRepository.create(createUserDto);
+      newUser.password = bcrypt.hashSync(createUserDto.password, 10);
+
       const savedUser = await this.userRepository.save(newUser);
+
       await this.createMonitoring(savedUser.id);
+
+      const session = this.getJwtToken(newUser);
 
       return {
         success: true,
         message: 'Usuario creado exitosamente',
-        data: savedUser,
+        data: { ...session },
       };
     } catch (error) {
       console.log('Error al crear el usuario:', error);
@@ -47,6 +56,42 @@ export class UsersService {
         message: 'Error al crear el usuario',
       };
     }
+  }
+
+  async login(loginDto: LoginDto) {
+    const { plate, password } = loginDto;
+    const user = await this.userRepository.findOneBy({ plate });
+
+    if (!user) {
+      return {
+        success: false,
+        message: 'Usuario no encontrado',
+        data: null,
+      };
+    }
+
+    const isPasswordValid = bcrypt.compareSync(password, user.password);
+
+    if (!isPasswordValid) {
+      return {
+        success: false,
+        message: 'Contraseña incorrecta',
+        data: null,
+      };
+    }
+    const session = this.getJwtToken(user);
+
+    return {
+      success: true,
+      message: 'Inicio de sesión exitoso',
+      data: {
+        ...session,
+      },
+    };
+  }
+
+  async validateUser(id: string) {
+    return this.userRepository.findOneBy({ id });
   }
 
   async updateUser(id: string, updateUserDto: UpdateUserDto) {
@@ -221,5 +266,13 @@ export class UsersService {
     console.log('Monitoring user items created successfully');
 
     return results;
+  }
+
+  private getJwtToken(user: User) {
+    const payload = { id: user.id, plate: user.plate };
+    return {
+      token: this.jwtService.sign(payload),
+      user,
+    };
   }
 }

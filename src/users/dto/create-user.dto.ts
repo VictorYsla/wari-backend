@@ -1,4 +1,4 @@
-import { IsString, IsBoolean, IsDateString } from 'class-validator';
+import { IsString, IsBoolean, IsDateString, MinLength } from 'class-validator';
 
 export class CreateUserDto {
   @IsString()
@@ -14,8 +14,6 @@ export class CreateUserDto {
   expired_date: string;
 
   @IsString()
-  clerk_id: string;
-
-  @IsString()
-  clerk_created_user_id: string;
+  @MinLength(6)
+  password: string;
 }
