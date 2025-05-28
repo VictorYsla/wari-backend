@@ -4,6 +4,7 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  BeforeInsert,
 } from 'typeorm';
 
 @Entity('users')
@@ -11,7 +12,7 @@ export class User {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ nullable: false })
+  @Column({ nullable: false, unique: true })
   plate: string;
 
   @Column({ type: 'boolean', default: true })
@@ -23,15 +24,17 @@ export class User {
   @Column({ name: 'expired_date', type: 'timestamptz', nullable: false })
   expired_date: Date | null;
 
-  @Column({ name: 'clerk_id', nullable: false })
-  clerk_id: string;
-
-  @Column({ name: 'clerk_created_user_id', nullable: false })
-  clerk_created_user_id: string;
+  @Column('text')
+  password: string;
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   created_at: Date;
 
   @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
   updated_at: Date;
+
+  @BeforeInsert()
+  checkEmail() {
+    this.plate = this.plate.trim();
+  }
 }
