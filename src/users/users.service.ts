@@ -90,8 +90,11 @@ export class UsersService {
     };
   }
 
-  async validateUser(id: string) {
-    return this.userRepository.findOneBy({ id });
+  async validateUser(plate: string, password: string) {
+    const user = await this.userRepository.findOneBy({ plate });
+    const isPasswordValid = bcrypt.compareSync(password, user.password);
+    if (!user || !isPasswordValid) return null;
+    return user;
   }
 
   async updateUser(id: string, updateUserDto: UpdateUserDto) {
