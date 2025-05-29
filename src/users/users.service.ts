@@ -6,16 +6,15 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { SchedulerRegistry } from '@nestjs/schedule';
 import { CronJob } from 'cron';
-import { MonitoringUserItemsService } from 'src/monitoring-user-items/monitoring-user-items.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { LoginDto } from './dto/login.dto';
+import { GenericResponse } from 'src/generic/types/generic-response.type';
 
 @Injectable()
 export class UsersService {
   constructor(
     private readonly schedulerRegistry: SchedulerRegistry,
-    private readonly monitoringUserItemsService: MonitoringUserItemsService,
     private readonly jwtService: JwtService,
 
     @InjectRepository(User)
@@ -62,6 +61,8 @@ export class UsersService {
     const { plate, password } = loginDto;
     const user = await this.userRepository.findOneBy({ plate });
 
+    console.log({ user });
+
     if (!user) {
       return {
         success: false,
@@ -71,6 +72,7 @@ export class UsersService {
     }
 
     const isPasswordValid = bcrypt.compareSync(password, user.password);
+    console.log({ isPasswordValid });
 
     if (!isPasswordValid) {
       return {
@@ -80,6 +82,8 @@ export class UsersService {
       };
     }
     const session = this.getJwtToken(user);
+
+    console.log({ session });
 
     return {
       success: true,
@@ -200,7 +204,10 @@ export class UsersService {
       };
     }
 
-    const existCron = this.schedulerRegistry.doesExist('cron', `${user?.id}`);
+    const existCron = this.schedulerRegistry.doesExist(
+      'cron',
+      `user-${user?.id}`,
+    );
 
     if (!existCron) {
       const job = new CronJob(
@@ -209,14 +216,13 @@ export class UsersService {
           const now = new Date();
           const expiredDate = new Date(user?.expired_date);
 
-          const isExpired = expiredDate && expiredDate < now;
+          const isValidDate = !isNaN(expiredDate.getTime()); // asegura que sea una fecha válida
+          const isExpired = isValidDate && expiredDate < now;
 
           const updateUser = {
             ...user,
             is_expired: isExpired,
-            expired_date: user.expired_date
-              ? new Date(user.expired_date).toISOString()
-              : null,
+            expired_date: new Date(user.expired_date),
           };
 
           const updatedUser = await this.updateUser(user?.id, updateUser);
@@ -225,23 +231,10 @@ export class UsersService {
         },
         null,
         false,
-        'America/Lima',
+        user.time_zone,
       );
 
-      this.schedulerRegistry.addCronJob(user?.id, job);
-
-      const existingItem = await this.monitoringUserItemsService.findByUserId(
-        user.id,
-      );
-
-      console.log({ existingItem: existingItem.length });
-
-      if (!existingItem.length) {
-        await this.monitoringUserItemsService.addItem({
-          plate: user.plate,
-          user_id: user.id,
-        });
-      }
+      this.schedulerRegistry.addCronJob(`user-${user?.id}`, job);
 
       job.start();
 
@@ -259,9 +252,13 @@ export class UsersService {
   async createMultipleUsersMonitorings() {
     const results = [];
 
-    const monitoringItems = await this.monitoringUserItemsService.getAllItems();
+    const users = await this.userRepository.find({
+      where: {
+        is_active: true,
+      },
+    });
 
-    for (const item of monitoringItems.data) {
+    for (const item of users) {
       const result = await this.createMonitoring(item.id);
       results.push({ item, result });
     }
@@ -269,6 +266,36 @@ export class UsersService {
     console.log('Monitoring user items created successfully');
 
     return results;
+  }
+
+  async stopUserMonitoring(id: string): Promise<GenericResponse> {
+    const existCron = this.schedulerRegistry.doesExist('cron', `user-${id}`);
+    if (existCron) {
+      const job = this.schedulerRegistry.getCronJob(`user-${id}`);
+
+      job.stop();
+      this.schedulerRegistry.deleteCronJob(`user-${id}`);
+
+      return {
+        message: `${`user-${id}`.slice(0, 5)}:monitoring has been stopped`,
+        success: true,
+      };
+    }
+    return {
+      message: `${`user-${id}`.slice(0, 5)}:monitoring was not active`,
+      success: false,
+    };
+  }
+
+  async getAllCrons() {
+    const runningJobs = this.schedulerRegistry.getCronJobs();
+    const jobIdsArray = [...runningJobs.keys()];
+
+    const userCrons = jobIdsArray.filter((cronKey) =>
+      cronKey.startsWith('user-'),
+    );
+
+    return userCrons; // devuelves directamente los IDs de los crons de usuario
   }
 
   private getJwtToken(user: User) {

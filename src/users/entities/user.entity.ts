@@ -22,9 +22,9 @@ export class User {
   is_expired: boolean;
 
   @Column({ name: 'expired_date', type: 'timestamptz', nullable: false })
-  expired_date: Date | null;
+  expired_date: Date;
 
-  @Column('text')
+  @Column({ type: 'text', nullable: false })
   password: string;
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
@@ -32,6 +32,9 @@ export class User {
 
   @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
   updated_at: Date;
+
+  @Column({ type: 'text', nullable: false })
+  time_zone: string;
 
   @BeforeInsert()
   checkEmail() {

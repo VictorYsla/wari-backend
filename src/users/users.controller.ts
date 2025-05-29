@@ -32,13 +32,15 @@ export class UsersController {
     @Res({ passthrough: true }) res: Response,
   ) {
     const response = await this.usersService.login(loginDto);
-    res.cookie('token', response.data.token, {
-      httpOnly: true,
-      secure: process.env.ENVIROMENT === 'production',
-      sameSite: 'lax',
-      maxAge: 1000 * 60 * 60 * 24 * 7, // 7 días
-      path: '/',
-    });
+    if (response.success) {
+      res.cookie('token', response.data.token, {
+        httpOnly: true,
+        secure: process.env.ENVIROMENT === 'production',
+        sameSite: 'lax',
+        maxAge: 1000 * 60 * 60 * 12, // 12h
+        path: '/',
+      });
+    }
     return response;
   }
 
@@ -54,8 +56,10 @@ export class UsersController {
       httpOnly: true,
       secure: process.env.ENVIROMENT === 'production',
       sameSite: 'lax',
+      maxAge: 0,
       path: '/',
     });
+
     return { message: 'Logged out' };
   }
 
@@ -96,5 +100,15 @@ export class UsersController {
   @Post('create-multiple-users-monitorings')
   createMultipleUsersMonitorings() {
     return this.usersService.createMultipleUsersMonitorings();
+  }
+
+  @Post('stop-user-monitoring')
+  stopUserMonitoring(@Query('id') id: string) {
+    return this.usersService.stopUserMonitoring(id);
+  }
+
+  @Get('get-all-crons')
+  getAllCrons() {
+    return this.usersService.getAllCrons();
   }
 }

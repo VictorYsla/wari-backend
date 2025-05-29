@@ -9,7 +9,6 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { MonitoringItemsModule } from './monitoring-items/monitoring-items.module';
 import { HttpModule } from '@nestjs/axios';
 import { UsersModule } from './users/users.module';
-import { MonitoringUserItemsModule } from './monitoring-user-items/monitoring-user-items.module';
 
 @Module({
   imports: [
@@ -33,7 +32,6 @@ import { MonitoringUserItemsModule } from './monitoring-user-items/monitoring-us
     HttpModule.register({}),
     MonitoringItemsModule,
     UsersModule,
-    MonitoringUserItemsModule,
   ],
   controllers: [],
   providers: [AppService],
