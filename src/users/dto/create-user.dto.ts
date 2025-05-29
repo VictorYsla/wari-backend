@@ -11,7 +11,10 @@ export class CreateUserDto {
   is_expired: boolean;
 
   @IsDateString()
-  expired_date: string;
+  expired_date: Date;
+
+  @IsString()
+  time_zone: string;
 
   @IsString()
   @MinLength(6)
