@@ -32,6 +32,9 @@ export class Trip {
   @Column()
   imei: string;
 
+  @Column({ nullable: false })
+  plate: string;
+
   @Column({ name: 'start_date', type: 'timestamptz', nullable: true })
   start_date: Date;
 

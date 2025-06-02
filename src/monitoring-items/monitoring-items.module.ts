@@ -5,7 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { MonitoringItem } from './entities/monitoring-item.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([MonitoringItem]), MonitoringItemsModule],
+  imports: [TypeOrmModule.forFeature([MonitoringItem])],
   controllers: [MonitoringItemsController],
   providers: [MonitoringItemsService],
   exports: [MonitoringItemsService],
