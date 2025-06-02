@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateTripDto } from './dto/create-trip.dto';
@@ -52,8 +52,20 @@ export class TripService {
   async findTripById(id: string): Promise<Trip> {
     const trip = await this.tripRepository.findOne({ where: { id } });
     if (!trip) {
-      throw new Error(`Trip with ID ${id} not found`);
+      console.log(`Trip with ID ${id} not found`);
     }
+    return trip;
+  }
+
+  async findActiveTripById(imei: string): Promise<Trip> {
+    const trip = await this.tripRepository.findOne({
+      where: { imei, is_active: true },
+    });
+
+    if (!trip) {
+      console.log(`Active trip with ID ${imei} not found`);
+    }
+
     return trip;
   }
 
@@ -91,6 +103,43 @@ export class TripService {
     // }
 
     return updatedTrip;
+  }
+
+  async deleteTrip(id: string): Promise<GenericResponse> {
+    try {
+      const trip = await this.tripRepository.findOne({ where: { id } });
+
+      if (!trip) {
+        return {
+          success: false,
+          message: `Trip with ID ${id} not found`,
+        };
+      }
+
+      // Detener monitoreo si existe
+      const cronExists = this.schedulerRegistry.doesExist('cron', trip.imei);
+      if (cronExists) {
+        const job = this.schedulerRegistry.getCronJob(trip.imei);
+        job.stop();
+        this.schedulerRegistry.deleteCronJob(trip.imei);
+      }
+
+      // Eliminar item de monitoreo si existe
+      await this.monitoringItemsService.removeItem(trip.imei);
+
+      // Eliminar viaje
+      await this.tripRepository.delete(id);
+
+      // Emitir cambio de estado si es necesario
+      this.tripGateway.emitTripStatusChange(null); // o `undefined` si quieres señalar que fue borrado
+
+      return {
+        success: true,
+        message: `Trip with ID ${id} deleted successfully`,
+      };
+    } catch (error) {
+      console.error('Error deleting trip:', error);
+    }
   }
 
   async deactivateTripsByImei(
@@ -169,6 +218,7 @@ export class TripService {
         await this.monitoringItemsService.addItem({
           imei: trip.imei,
           tripId: trip.id,
+          plate: trip.plate,
         });
       }
 
@@ -218,7 +268,6 @@ export class TripService {
           'Error when get vehicle data-getAllCrons-getVehicleData:',
           error,
         );
-        throw new InternalServerErrorException('Please check server logs');
       }
     });
 

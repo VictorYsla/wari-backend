@@ -46,8 +46,9 @@ export class UsersController {
 
   @UseGuards(JwtAuthGuard)
   @Get('me')
-  getProfile(@Req() req) {
-    return req.user;
+  async getProfile(@Req() req) {
+    const userResponse = this.getUserByPlate(req?.user?.plate);
+    return userResponse;
   }
 
   @Post('logout')
