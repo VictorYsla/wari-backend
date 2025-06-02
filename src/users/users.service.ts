@@ -233,7 +233,12 @@ export class UsersService {
             user?.imei,
           );
 
-          if (activeTrip && activeTrip.is_active && !activeTrip.destination) {
+          if (
+            activeTrip &&
+            activeTrip.is_active &&
+            !activeTrip.destination &&
+            isExpired
+          ) {
             const deletedTrip = await this.tripService.deleteTrip(
               activeTrip.id,
             );
