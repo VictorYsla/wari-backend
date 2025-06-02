@@ -15,6 +15,9 @@ export class User {
   @Column({ nullable: false, unique: true })
   plate: string;
 
+  @Column({ type: 'text', nullable: true, default: null }) //temporal
+  imei: string;
+
   @Column({ type: 'boolean', default: true })
   is_active: boolean;
 

@@ -9,6 +9,9 @@ export class MonitoringItem {
   imei: string;
 
   @Column({ type: 'text' })
+  plate: string;
+
+  @Column({ type: 'text' })
   tripId: string;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })

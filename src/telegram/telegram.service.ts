@@ -47,7 +47,6 @@ export class TelegramService {
         'Error sending message to Telegram:',
         error.response?.data || error.message,
       );
-      throw new Error(`Telegram API error: ${error.response?.statusText}`);
     }
   }
 }

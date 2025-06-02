@@ -10,12 +10,14 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { LoginDto } from './dto/login.dto';
 import { GenericResponse } from 'src/generic/types/generic-response.type';
+import { TripService } from 'src/trip/trip.service';
 
 @Injectable()
 export class UsersService {
   constructor(
     private readonly schedulerRegistry: SchedulerRegistry,
     private readonly jwtService: JwtService,
+    private readonly tripService: TripService,
 
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
@@ -197,6 +199,8 @@ export class UsersService {
 
     const user = userResponse?.data;
 
+    const timeZone = user?.time_zone ?? 'UTC';
+
     if (!user?.id) {
       return {
         message: `User id is not valid`,
@@ -224,14 +228,23 @@ export class UsersService {
             is_expired: isExpired,
             expired_date: new Date(user.expired_date),
           };
-
           const updatedUser = await this.updateUser(user?.id, updateUser);
+          const activeTrip = await this.tripService.findActiveTripById(
+            user?.imei,
+          );
+
+          if (activeTrip && activeTrip.is_active && !activeTrip.destination) {
+            const deletedTrip = await this.tripService.deleteTrip(
+              activeTrip.id,
+            );
+            console.log('deletedTrip:', deletedTrip);
+          }
 
           console.log('updatedUser:', updatedUser);
         },
         null,
         false,
-        user.time_zone,
+        timeZone,
       );
 
       this.schedulerRegistry.addCronJob(`user-${user?.id}`, job);
@@ -263,7 +276,7 @@ export class UsersService {
       results.push({ item, result });
     }
 
-    console.log('Monitoring user items created successfully');
+    console.log('Monitoring user items created successfully:', results);
 
     return results;
   }

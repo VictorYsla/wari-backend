@@ -17,5 +17,6 @@ import { MonitoringItemsModule } from 'src/monitoring-items/monitoring-items.mod
   ],
   controllers: [TripController],
   providers: [TripService, TripGateway],
+  exports: [TripService],
 })
 export class TripModule {}
