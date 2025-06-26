@@ -69,15 +69,13 @@ export class UsersController {
     return this.usersService.createMonitoring(id);
   }
 
-  @Get('get-all-users')
-  async getAllUsers() {
-    // Puedes implementar findAll si quieres
-    return { success: false, message: 'Método no implementado' };
-  }
-
   @Get('get-user-by-id')
   async getUserById(@Query('id') id: string) {
     return await this.usersService.getUserById(id);
+  }
+  @Get('get-all-users-ordered')
+  async getAllUsersOrdered() {
+    return await this.usersService.getAllUsersOrdered();
   }
 
   @Patch('update-user')

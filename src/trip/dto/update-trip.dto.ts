@@ -6,4 +6,7 @@ export class UpdateTripDto extends PartialType(CreateTripDto) {
   @IsBoolean()
   @IsOptional()
   grace_period_active?: boolean;
+  @IsOptional()
+  @IsBoolean()
+  is_completed?: boolean;
 }
