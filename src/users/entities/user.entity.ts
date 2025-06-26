@@ -15,6 +15,15 @@ export class User {
   @Column({ nullable: false, unique: true })
   plate: string;
 
+  @Column({ nullable: true })
+  driver_phone: string;
+
+  @Column({ nullable: true })
+  vehicle_type: string;
+
+  @Column({ type: 'int', default: 0 })
+  completed_trips: number;
+
   @Column({ type: 'text', nullable: true, default: null }) //temporal
   imei: string;
 
