@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { AxiosAdapter } from 'src/generic/adapters/axios.adapter';
-import { GPS, GPSID } from './types';
+import { GPS, GPSID, HawkUserObject } from './types';
 
 @Injectable()
 export class HawkService {
@@ -15,5 +15,10 @@ export class HawkService {
     const item = vehicleData[uniqueItem] as GPS;
 
     return item;
+  }
+
+  async getUserObjects(): Promise<HawkUserObject[]> {
+    const url = `${process.env.HAWK_URL}?api=${process.env.HAWK_USER_API}&cmd=USER_GET_OBJECTS&key=${process.env.HAWK_MASTER_KEY}`;
+    return await this.http.get<HawkUserObject[]>(url);
   }
 }

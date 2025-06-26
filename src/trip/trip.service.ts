@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateTripDto } from './dto/create-trip.dto';
@@ -11,6 +11,7 @@ import { CronJob } from 'cron';
 import { haversineDistance } from './helpers';
 import { GenericResponse } from 'src/generic/types/generic-response.type';
 import { MonitoringItemsService } from 'src/monitoring-items/monitoring-items.service';
+import { UsersService } from 'src/users/users.service';
 
 @Injectable()
 export class TripService {
@@ -19,6 +20,9 @@ export class TripService {
     private readonly hawkService: HawkService,
     private readonly schedulerRegistry: SchedulerRegistry,
     private readonly monitoringItemsService: MonitoringItemsService,
+
+    @Inject(forwardRef(() => UsersService))
+    private readonly usersService: UsersService,
     @InjectRepository(Trip)
     private readonly tripRepository: Repository<Trip>,
   ) {}
@@ -70,9 +74,33 @@ export class TripService {
   }
 
   async updateTrip(id: string, updateTripDto: UpdateTripDto) {
-    // const existingTrip = await this.tripRepository.findOne({ where: { id } });
+    const existingTrip = await this.tripRepository.findOne({ where: { id } });
 
     await this.tripRepository.update({ id }, updateTripDto);
+
+    // Lógica para completed_trips del usuario
+    if (updateTripDto.is_completed === true) {
+      // Busca el usuario por plate o imei (ajusta según tu modelo)
+      const user = await this.usersService.getUserByPlate(existingTrip.plate);
+
+      if (user?.data) {
+        let completedTrips = user.data.completed_trips ?? 0;
+
+        if (!completedTrips || completedTrips === 0) {
+          // Si el usuario tiene 0, cuenta todos los trips completados
+          const totalCompleted = await this.tripRepository.count({
+            where: { plate: existingTrip.plate, is_completed: true },
+          });
+          completedTrips = totalCompleted > 0 ? totalCompleted : 1;
+        } else {
+          completedTrips += 1;
+        }
+
+        await this.usersService.updateUser(user.data.id, {
+          completed_trips: completedTrips,
+        });
+      }
+    }
 
     if (updateTripDto.grace_period_active) {
       const timeout = setTimeout(

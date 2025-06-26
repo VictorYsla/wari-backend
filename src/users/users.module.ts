@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { UsersController } from './users.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
@@ -8,6 +8,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TripModule } from '../trip/trip.module';
 import { UsersService } from './users.service';
+import { HawkModule } from 'src/hawk/hawk.module';
 
 @Module({
   imports: [
@@ -21,10 +22,17 @@ import { UsersService } from './users.service';
         signOptions: { expiresIn: '12h' },
       }),
     }),
-    TripModule,
+    HawkModule,
+    forwardRef(() => TripModule),
   ],
   controllers: [UsersController],
   providers: [UsersService, JwtStrategy],
-  exports: [TypeOrmModule, JwtStrategy, PassportModule, JwtModule],
+  exports: [
+    TypeOrmModule,
+    JwtStrategy,
+    PassportModule,
+    JwtModule,
+    UsersService,
+  ],
 })
 export class UsersModule {}

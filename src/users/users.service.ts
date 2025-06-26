@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
@@ -11,12 +11,16 @@ import * as bcrypt from 'bcrypt';
 import { LoginDto } from './dto/login.dto';
 import { GenericResponse } from 'src/generic/types/generic-response.type';
 import { TripService } from 'src/trip/trip.service';
+import { HawkService } from 'src/hawk/hawk.service';
 
 @Injectable()
 export class UsersService {
   constructor(
     private readonly schedulerRegistry: SchedulerRegistry,
     private readonly jwtService: JwtService,
+    private readonly hawkService: HawkService,
+
+    @Inject(forwardRef(() => TripService))
     private readonly tripService: TripService,
 
     @InjectRepository(User)
@@ -114,6 +118,21 @@ export class UsersService {
     }
 
     try {
+      // Si faltan driver_phone o vehicle_type, intenta obtenerlos desde Hawk
+      if ((!existing.driver_phone || !existing.vehicle_type) && existing.imei) {
+        const hawkObjects = await this.hawkService.getUserObjects();
+        const hawkUser = hawkObjects.find((obj) => obj.imei === existing.imei);
+
+        if (hawkUser) {
+          if (!existing.driver_phone && hawkUser.device) {
+            updateUserDto.driver_phone = hawkUser.device;
+          }
+          if (!existing.vehicle_type && hawkUser.model) {
+            updateUserDto.vehicle_type = hawkUser.model;
+          }
+        }
+      }
+
       if (updateUserDto.plate && updateUserDto.plate !== existing.plate) {
         const duplicatePlate = await this.userRepository.findOne({
           where: { plate: updateUserDto.plate },
@@ -190,6 +209,52 @@ export class UsersService {
       return {
         success: false,
         message: 'Error al buscar el usuario por placa',
+      };
+    }
+  }
+
+  async getAllUsersOrdered() {
+    try {
+      const users = await this.userRepository.find();
+      const hawkObjects = await this.hawkService.getUserObjects();
+
+      function getStatusPriority(user) {
+        if (user.is_active) return 1;
+        if (user.is_expired) return 2;
+        return 3;
+      }
+
+      users.sort((a, b) => {
+        const statusA = getStatusPriority(a);
+        const statusB = getStatusPriority(b);
+
+        if (statusA !== statusB) return statusA - statusB;
+        return (b.completed_trips ?? 0) - (a.completed_trips ?? 0);
+      });
+
+      return users.map((user) => {
+        const hawk = hawkObjects.find((obj) => obj.imei === user.imei);
+
+        return {
+          id: user.id,
+          driverNumber: user.driver_phone || user.plate,
+          plate: user.plate,
+          vehicleType: user.vehicle_type || 'Desconocido',
+          completedTrips: user.completed_trips ?? 0,
+          lastUpdate:
+            user.updated_at?.toISOString() ?? new Date().toISOString(),
+          is_active: user.is_active,
+          is_expired: user.is_expired ?? false,
+          imei: user.imei,
+          hawkData: hawk || null, // Aquí añades toda la info de Hawk para ese usuario
+        };
+      });
+    } catch (error) {
+      console.log('Error al obtener la lista de conductores ordenados:', error);
+      return {
+        success: false,
+        message: 'Error al obtener la lista de conductores',
+        data: [],
       };
     }
   }
