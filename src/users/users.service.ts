@@ -234,6 +234,7 @@ export class UsersService {
 
       return users.map((user) => {
         const hawk = hawkObjects.find((obj) => obj.imei === user.imei);
+        console.log('hawk:', hawk);
 
         return {
           id: user.id,
