@@ -21,6 +21,9 @@ export class Sponsor {
   @Column({ nullable: true })
   website: string;
 
+  @Column({ default: true })
+  is_active: boolean;
+
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   created_at: Date;
 
