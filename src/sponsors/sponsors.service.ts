@@ -19,7 +19,9 @@ export class SponsorsService {
   }
 
   async findAll(): Promise<Sponsor[]> {
-    return await this.sponsorRepository.find();
+    return await this.sponsorRepository.find({
+      where: { is_active: true },
+    });
   }
 
   async findOne(id: string): Promise<Sponsor> {
