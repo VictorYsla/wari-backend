@@ -19,6 +19,7 @@ export class HawkService {
 
   async getUserObjects(): Promise<HawkUserObject[]> {
     const url = `${process.env.HAWK_URL}?api=${process.env.HAWK_USER_API}&cmd=USER_GET_OBJECTS&key=${process.env.HAWK_MASTER_KEY}`;
+
     return await this.http.get<HawkUserObject[]>(url);
   }
 }
