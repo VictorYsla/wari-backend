@@ -234,7 +234,14 @@ export class UsersService {
         return (b.completed_trips ?? 0) - (a.completed_trips ?? 0);
       });
 
-      return users.map((user) => {
+      // Filtra solo los usuarios que tienen match en Hawk
+      const filteredUsers = users.filter((user) =>
+        hawkObjects.some(
+          (obj) => String(obj.imei).trim() === String(user.imei).trim(),
+        ),
+      );
+
+      return filteredUsers.map((user) => {
         const hawk = hawkObjects.find(
           (obj) => String(obj.imei).trim() === String(user.imei).trim(),
         );
