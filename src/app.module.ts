@@ -10,6 +10,7 @@ import { MonitoringItemsModule } from './monitoring-items/monitoring-items.modul
 import { HttpModule } from '@nestjs/axios';
 import { UsersModule } from './users/users.module';
 import { VerifiedVehicleSearchesModule } from './verified-vehicle-searches/verified-vehicle-searches.module';
+import { SponsorsModule } from './sponsors/sponsors.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { VerifiedVehicleSearchesModule } from './verified-vehicle-searches/verif
     MonitoringItemsModule,
     UsersModule,
     VerifiedVehicleSearchesModule,
+    SponsorsModule,
   ],
   controllers: [],
   providers: [AppService],
