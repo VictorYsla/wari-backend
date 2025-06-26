@@ -237,7 +237,7 @@ export class UsersService {
 
         return {
           id: user.id,
-          driverNumber: user.driver_phone || user.plate,
+          driverNumber: user.driver_phone || hawk.sim_number || '',
           plate: user.plate,
           vehicleType: user.vehicle_type || 'Desconocido',
           completedTrips: user.completed_trips ?? 0,
