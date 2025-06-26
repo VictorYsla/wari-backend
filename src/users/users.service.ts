@@ -215,7 +215,9 @@ export class UsersService {
 
   async getAllUsersOrdered() {
     try {
-      const users = await this.userRepository.find();
+      const users = await this.userRepository.find({
+        where: { is_active: true }, // Solo usuarios activos
+      });
       const hawkObjects = await this.hawkService.getUserObjects();
 
       function getStatusPriority(user) {
@@ -233,12 +235,30 @@ export class UsersService {
       });
 
       return users.map((user) => {
-        const hawk = hawkObjects.find((obj) => obj.imei === user.imei);
-        console.log('hawk:', hawk);
+        const hawk = hawkObjects.find(
+          (obj) => String(obj.imei).trim() === String(user.imei).trim(),
+        );
+
+        // Log para debuggear el match de IMEI
+        if (!hawk) {
+          console.log(`[Hawk Match] No se encontró hawk para user`, {
+            user_imei: user.imei,
+            hawk_imeis: hawkObjects.map((obj) => obj.imei),
+            user_id: user.id,
+            user_plate: user.plate,
+          });
+        } else {
+          console.log(`[Hawk Match] Match encontrado`, {
+            user_imei: user.imei,
+            hawk_imei: hawk.imei,
+            user_id: user.id,
+            user_plate: user.plate,
+          });
+        }
 
         return {
           id: user.id,
-          driverNumber: user.driver_phone || hawk.sim_number || '',
+          driverNumber: user.driver_phone || hawk?.sim_number || '',
           plate: user.plate,
           vehicleType: user.vehicle_type || 'Desconocido',
           completedTrips: user.completed_trips ?? 0,
@@ -247,7 +267,7 @@ export class UsersService {
           is_active: user.is_active,
           is_expired: user.is_expired ?? false,
           imei: user.imei,
-          hawkData: hawk || null, // Aquí añades toda la info de Hawk para ese usuario
+          hawkData: hawk || null,
         };
       });
     } catch (error) {
@@ -278,11 +298,24 @@ export class UsersService {
       'cron',
       `user-${user?.id}`,
     );
-
     if (!existCron) {
       const job = new CronJob(
         '0 5 0 * * *',
         async () => {
+          const hawkObjects = await this.hawkService.getUserObjects();
+          const hawkUser = hawkObjects.find(
+            (obj) => String(obj.imei).trim() === String(user.imei).trim(),
+          );
+
+          if (!hawkUser) {
+            await this.updateUser(user.id, { is_active: false });
+            this.schedulerRegistry.deleteCronJob(`user-${user.id}`);
+            console.log(
+              `Usuario ${user.plate} no existe en Hawk. Marcado como inactivo y cron detenido.`,
+            );
+            return;
+          }
+
           const now = new Date();
           const expiredDate = new Date(user?.expired_date);
 
